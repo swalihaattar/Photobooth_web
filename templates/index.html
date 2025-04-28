@@ -3,12 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>Vintage Photobooth</title>
+  <!-- Google Analytics Tracking -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GC658FXX9P"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-GC658FXX9P');
+  </script>
   <style>
     body {
       margin: 0;
       padding: 0;
       text-align: center;
-      background-image: url('your-vintage-background.jpg'); /* <-- Replace with your background image */
+      background-color: #fff8dc; /* Light very yellowish color */
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -20,14 +29,16 @@
       margin-top: 30px;
       font-size: 3em;
       text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+      color: #8B4513; /* Vintage brown */
     }
 
     #video, #canvas {
       margin-top: 20px;
-      border: 5px solid white;
+      border: 5px solid #8B4513; /* Vintage brown */
       border-radius: 12px;
       box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
+
 
     #start {
       margin-top: 15px;
@@ -36,11 +47,12 @@
       background-color: #bfa88e;
       border: none;
       border-radius: 8px;
-      color: white;
+      color: #8B4513; /* Vintage brown text color */
       cursor: pointer;
       box-shadow: 2px 2px 6px rgba(0,0,0,0.5);
       transition: background-color 0.3s ease;
     }
+
 
     #start:hover {
       background-color: #a07c61;
@@ -110,6 +122,8 @@ async function showCountdown() {
         countdownEl.textContent = i;
         await sleep(1000);
     }
+    countdownEl.textContent = "Click!"; // Show "Click!" after 1
+    await sleep(500); // Show "Click!" briefly
     countdownEl.style.display = 'none';
 }
 

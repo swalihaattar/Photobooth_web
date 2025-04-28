@@ -8,10 +8,25 @@ navigator.mediaDevices.getUserMedia({ video: true })
         console.error('Error accessing webcam:', err);
     });
 
+// Track when "Start Capture" button is clicked
+document.getElementById('start').addEventListener('click', function() {
+    gtag('event', 'start_capture_clicked', {
+        'event_category': 'Engagement',
+        'event_label': 'Start Button Clicked'
+    });
+});
+
+// Track when email is entered and submitted
 async function capturePhotos() {
     const email = prompt("Enter your email:");
 
     if (!email) return alert("Email is required!");
+
+    // Track the event of email entered
+    gtag('event', 'email_entered', {
+        'event_category': 'Engagement',
+        'event_label': 'Email Entered for Capture'
+    });
 
     const canvas = document.createElement('canvas');
     canvas.width = 640;

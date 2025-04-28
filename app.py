@@ -48,7 +48,7 @@ def capture():
         try:
             img_bytes = base64.b64decode(img_data.split(',')[1])
             img = Image.open(BytesIO(img_bytes)).convert('RGB')
-            img = enhance_image(img)  # Apply the same enhancement
+            img = enhance_image(img)
             images.append(img)
         except Exception as e:
             return jsonify({'error': f"Failed to decode image: {str(e)}"}), 400
@@ -57,14 +57,10 @@ def capture():
         return jsonify({'error': 'Exactly 3 photos are required.'}), 400
 
     # Create photo strip
-    strip_width = 320
-    strip_height = 3 * 410
-    strip = Image.new('RGB', (strip_width, strip_height), (243, 229, 171))
-
+    strip = Image.new('RGB', (320, 3 * 410), (243, 229, 171))
     for idx, img in enumerate(images):
         img = img.resize((300, 400))
         strip.paste(img, (10, idx * 410 + 5))
-
     bordered_strip = ImageOps.expand(strip, border=10, fill='gold')
 
     draw = ImageDraw.Draw(bordered_strip)
@@ -72,44 +68,39 @@ def capture():
         font = ImageFont.truetype("arial.ttf", size=28)
     except:
         font = ImageFont.load_default()
-
     text = "Vintage Night 2025 🎉"
     text_bbox = draw.textbbox((0, 0), text, font=font)
     text_width = text_bbox[2] - text_bbox[0]
     position = ((bordered_strip.width - text_width) // 2, bordered_strip.height - 40)
     draw.text(position, text, (255, 215, 0), font=font)
 
-    # Save the strip
-    day_folder = os.path.join(base_capture_folder, datetime.now().strftime("%Y-%m-%d"))
-    os.makedirs(day_folder, exist_ok=True)
-    random_part = generate_random_filename()
-    filename = os.path.join(day_folder, f"strip_{datetime.now().strftime('%H%M%S')}_{random_part}.png")
-    bordered_strip.save(filename)
+    # Save to memory
+    img_bytes_io = BytesIO()
+    bordered_strip.save(img_bytes_io, format='PNG')
+    img_bytes_io.seek(0)
 
-    # Send via email if requested
+    # Send via email
     if email:
         try:
-            send_email(email, filename)
+            send_email(email, img_bytes_io)
         except Exception as e:
             return jsonify({'error': f"Failed to send email: {str(e)}"}), 500
 
     return jsonify({'success': True})
 
-def send_email(receiver_email, attachment_path):
+def send_email(receiver_email, img_bytes_io):
     msg = EmailMessage()
     msg['Subject'] = 'Your Vintage Photobooth Strip 🎞'
     msg['From'] = SENDER_EMAIL
     msg['To'] = receiver_email
     msg.set_content('Thank you for using the Vintage Party Photobooth! Find your photo strip attached.')
 
-    with open(attachment_path, 'rb') as f:
-        file_data = f.read()
-        file_name = os.path.basename(attachment_path)
+    img_bytes_io.seek(0)
+    file_data = img_bytes_io.read()
 
-    msg.add_attachment(file_data, maintype='image', subtype='png', filename=file_name)
+    msg.add_attachment(file_data, maintype='image', subtype='png', filename='vintage_strip.png')
 
     context = ssl.create_default_context()
-
     with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context) as server:
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.send_message(msg)
