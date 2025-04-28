@@ -1,13 +1,12 @@
 from flask import Flask, render_template, request, jsonify
 from PIL import Image, ImageOps, ImageDraw, ImageFont, ImageEnhance
-from datetime import datetime
 import os
 import base64
 import smtplib
 import ssl
 from email.message import EmailMessage
 from io import BytesIO
-import random
+import re
 
 app = Flask(__name__)
 
@@ -17,22 +16,19 @@ SENDER_PASSWORD = "jamm ttsp gvxn rmip"
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 465
 
-# Base folder to save captures
-base_capture_folder = "captures"
-os.makedirs(base_capture_folder, exist_ok=True)
-
 def enhance_image(img):
     """Apply contrast enhancement similar to the desktop version."""
     enhancer = ImageEnhance.Contrast(img)
     return enhancer.enhance(1.5)
 
-def generate_random_filename():
-    """Generate random part to make filename unique."""
-    return ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=6))
-
 @app.route('/')
 def home():
     return render_template('index.html')
+
+def validate_email(email):
+    """Basic regex validation for email."""
+    email_regex = r"(^[\w\.\+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+    return re.match(email_regex, email) is not None
 
 @app.route('/capture', methods=['POST'])
 def capture():
@@ -79,8 +75,10 @@ def capture():
     bordered_strip.save(img_bytes_io, format='PNG')
     img_bytes_io.seek(0)
 
-    # Send via email
+    # Email validation and sending logic
     if email:
+        if not validate_email(email):
+            return jsonify({'error': 'Invalid email address'}), 400
         try:
             send_email(email, img_bytes_io)
         except Exception as e:

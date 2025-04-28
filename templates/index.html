@@ -86,100 +86,129 @@
 
   <div id="countdown"></div> <!-- Countdown div -->
 
-<script>
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const startButton = document.getElementById('start');
-const countdownEl = document.getElementById('countdown'); 
-let context = canvas.getContext('2d');
-
-let capturedPhotos = [];
-
-// Start webcam
-navigator.mediaDevices.getUserMedia({ video: true })
-.then(stream => {
-    video.srcObject = stream;
-})
-.catch(err => {
-    console.error("Error accessing webcam: ", err);
-});
-
-// Sleep helper function
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Capture single photo
-function capturePhoto() {
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/png');
-}
-
-// Countdown function
-async function showCountdown() {
-    countdownEl.style.display = 'block';
-    for (let i = 3; i > 0; i--) {
-        countdownEl.textContent = i;
-        await sleep(1000);
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const startButton = document.getElementById('start');
+    const countdownEl = document.getElementById('countdown'); 
+    let context = canvas.getContext('2d');
+    
+    let capturedPhotos = [];
+    
+    // Start webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream;
+    })
+    .catch(err => {
+        console.error("Error accessing webcam: ", err);
+    });
+    
+    // Sleep helper function
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
-    countdownEl.textContent = "Click!"; // Show "Click!" after 1
-    await sleep(500); // Show "Click!" briefly
-    countdownEl.style.display = 'none';
-}
-
-function validateEmail(email) {
-    if (!email) return false;
-    const re = /\S+@\S+\.\S+/;
-    return re.test(email);
-}
-
-// Countdown + Capture 3 photos
-startButton.addEventListener('click', async () => {
+    
+    // Capture single photo
+    function capturePhoto() {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/png');
+    }
+    
+    // Countdown function
+    async function showCountdown() {
+        countdownEl.style.display = 'block';
+        for (let i = 3; i > 0; i--) {
+            countdownEl.textContent = i;
+            await sleep(1000);
+        }
+        countdownEl.textContent = "Click!"; // Show "Click!" after 1
+        await sleep(500); // Show "Click!" briefly
+        countdownEl.style.display = 'none';
+    }
+    
+    function validateEmail(email) {
+        if (!email) return false;
+        const re = /\S+@\S+\.\S+/;
+        return re.test(email);
+    }
+    
+    // Countdown + Capture 3 photos
+    
+    startButton.addEventListener('click', async () => {
     capturedPhotos = [];
 
     // Send Google Analytics event
     gtag('event', 'start_capture', {
-      'event_category': 'Photobooth',
-      'event_label': 'User started capture'
+        'event_category': 'Photobooth',
+        'event_label': 'User started capture'
     });
 
+    // Capture 3 photos
     for (let i = 0; i < 3; i++) {
         await showCountdown();
         capturedPhotos.push(capturePhoto());
         await sleep(500); // Short delay between shots
     }
 
-    const email = prompt("Enter your email to receive your photo strip (optional):");
+    // Show email input popup
+    let email = prompt("Enter your email to receive your photo strip (or cancel to skip):");
 
-    // Track email submission event
-    gtag('event', 'email_submitted', {
-      'event_category': 'Photobooth',
-      'event_label': email ? 'Email entered' : 'No email entered',
-      'email_valid': email && validateEmail(email) ? 'valid' : 'invalid_or_none'
-    });
+    // Track email submission status in Google Analytics
+    if (email === null) {
+        // User canceled, don't send email
+        gtag('event', 'email_submitted', {
+            'event_category': 'Photobooth',
+            'event_label': 'No email entered',
+            'email_valid': 'none'
+        });
+    } else if (email === "") {
+        // Blank email entered
+        gtag('event', 'email_submitted', {
+            'event_category': 'Photobooth',
+            'event_label': 'Blank email entered',
+            'email_valid': 'none'
+        });
+    } else if (!validateEmail(email)) {
+        // Invalid email entered
+        alert("Invalid email address. Please enter a valid email.");
+        gtag('event', 'email_submitted', {
+            'event_category': 'Photobooth',
+            'event_label': 'Email entered',
+            'email_valid': 'invalid'
+        });
+    } else {
+        // Valid email entered
+        gtag('event', 'email_submitted', {
+            'event_category': 'Photobooth',
+            'event_label': 'Email entered',
+            'email_valid': 'valid'
+        });
 
-    fetch('/capture', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-          photos: capturedPhotos,
-          email: email
-      })
-  })
-  .then(response => response.json())  // <== Move .then immediately after fetch()
-  .then(data => {
-      if (data.success) {
-          alert('Photo strip created and sent!');
-      } else {
-          alert('Error: ' + (data.error || 'Unknown'));
-      }
-  })
-  .catch(error => {
-      console.error('Error:', error);
-  });
-
+        // Send photo strip and email (only if email is valid)
+        fetch('/capture', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                photos: capturedPhotos,
+                email: email
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Photo strip created and sent!');
+            } else {
+                alert('Error: ' + (data.error || 'Unknown'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
 });
-</script>
 
+    </script>
+    
 </body>
 </html>
