@@ -151,41 +151,50 @@
         await sleep(500); // Short delay between shots
     }
 
-    // Show email input popup
-    let email = prompt("Enter your email to receive your photo strip (or cancel to skip):");
+    // Email input loop
+    let email = null;
+    let emailValid = false;
+    
+    while (!emailValid) {
+        email = prompt("Enter your email to receive your photo strip (or cancel to skip):");
 
-    // Track email submission status in Google Analytics
-    if (email === null) {
-        // User canceled, don't send email
-        gtag('event', 'email_submitted', {
-            'event_category': 'Photobooth',
-            'event_label': 'No email entered',
-            'email_valid': 'none'
-        });
-    } else if (email === "") {
-        // Blank email entered
-        gtag('event', 'email_submitted', {
-            'event_category': 'Photobooth',
-            'event_label': 'Blank email entered',
-            'email_valid': 'none'
-        });
-    } else if (!validateEmail(email)) {
-        // Invalid email entered
-        alert("Invalid email address. Please enter a valid email.");
-        gtag('event', 'email_submitted', {
-            'event_category': 'Photobooth',
-            'event_label': 'Email entered',
-            'email_valid': 'invalid'
-        });
-    } else {
-        // Valid email entered
-        gtag('event', 'email_submitted', {
-            'event_category': 'Photobooth',
-            'event_label': 'Email entered',
-            'email_valid': 'valid'
-        });
+        if (email === null) {
+            // User canceled, don't send email
+            gtag('event', 'email_submitted', {
+                'event_category': 'Photobooth',
+                'event_label': 'No email entered',
+                'email_valid': 'none'
+            });
+            emailValid = true;  // Exit loop
+        } else if (email === "") {
+            // Blank email entered
+            gtag('event', 'email_submitted', {
+                'event_category': 'Photobooth',
+                'event_label': 'Blank email entered',
+                'email_valid': 'none'
+            });
+            alert("Please enter a valid email address.");
+        } else if (!validateEmail(email)) {
+            // Invalid email entered
+            gtag('event', 'email_submitted', {
+                'event_category': 'Photobooth',
+                'event_label': 'Invalid email entered',
+                'email_valid': 'invalid'
+            });
+            alert("Invalid email. Please enter a valid email.");
+        } else {
+            // Valid email entered
+            gtag('event', 'email_submitted', {
+                'event_category': 'Photobooth',
+                'event_label': 'Email entered',
+                'email_valid': 'valid'
+            });
+            emailValid = true;  // Exit loop if email is valid
+        }
+    }
 
-        // Send photo strip and email (only if email is valid)
+    // Send photo strip and email (only if email is valid)
+    if (email && validateEmail(email)) {
         fetch('/capture', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
