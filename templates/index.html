@@ -131,16 +131,20 @@ async function showCountdown() {
 startButton.addEventListener('click', async () => {
     capturedPhotos = [];
 
+    // Send Google Analytics event
+    gtag('event', 'start_capture', {
+      'event_category': 'Photobooth',
+      'event_label': 'User started capture'
+    });
+
     for (let i = 0; i < 3; i++) {
         await showCountdown();
         capturedPhotos.push(capturePhoto());
         await sleep(500); // Short delay between shots
     }
 
-    // After capturing, ask email
     const email = prompt("Enter your email to receive your photo strip (optional):");
 
-    // Send to server
     fetch('/capture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
