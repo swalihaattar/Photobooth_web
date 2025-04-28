@@ -127,6 +127,12 @@ async function showCountdown() {
     countdownEl.style.display = 'none';
 }
 
+function validateEmail(email) {
+    if (!email) return false;
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
+}
+
 // Countdown + Capture 3 photos
 startButton.addEventListener('click', async () => {
     capturedPhotos = [];
@@ -145,25 +151,33 @@ startButton.addEventListener('click', async () => {
 
     const email = prompt("Enter your email to receive your photo strip (optional):");
 
-    fetch('/capture', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            photos: capturedPhotos,
-            email: email
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Photo strip created and sent!');
-        } else {
-            alert('Error: ' + (data.error || 'Unknown'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
+    // Track email submission event
+    gtag('event', 'email_submitted', {
+      'event_category': 'Photobooth',
+      'event_label': email ? 'Email entered' : 'No email entered',
+      'email_valid': email && validateEmail(email) ? 'valid' : 'invalid_or_none'
     });
+
+    fetch('/capture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+          photos: capturedPhotos,
+          email: email
+      })
+  })
+  .then(response => response.json())  // <== Move .then immediately after fetch()
+  .then(data => {
+      if (data.success) {
+          alert('Photo strip created and sent!');
+      } else {
+          alert('Error: ' + (data.error || 'Unknown'));
+      }
+  })
+  .catch(error => {
+      console.error('Error:', error);
+  });
+
 });
 </script>
 
