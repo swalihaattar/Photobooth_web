@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vintage Photobooth</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      background-image: url('your-vintage-background.jpg'); /* <-- Replace with your background image */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      font-family: 'Georgia', serif;
+      color: #ffffff;
+    }
+
+    h1 {
+      margin-top: 30px;
+      font-size: 3em;
+      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+    }
+
+    #video, #canvas {
+      margin-top: 20px;
+      border: 5px solid white;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    #start {
+      margin-top: 15px;
+      padding: 12px 25px;
+      font-size: 1.2em;
+      background-color: #bfa88e;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+      transition: background-color 0.3s ease;
+    }
+
+    #start:hover {
+      background-color: #a07c61;
+    }
+
+    /* Countdown styling */
+    #countdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 100px;
+      color: white;
+      text-shadow: 2px 2px 10px black;
+      display: none;
+      z-index: 10;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Vintage Party Photobooth 📸</h1>
+
+  <div>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+    <br>
+    <button id="start">Start Capture 🎥</button>  
+  </div>
+
+  <div id="countdown"></div> <!-- Countdown div -->
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const startButton = document.getElementById('start');
+const countdownEl = document.getElementById('countdown'); 
+let context = canvas.getContext('2d');
+
+let capturedPhotos = [];
+
+// Start webcam
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => {
+    video.srcObject = stream;
+})
+.catch(err => {
+    console.error("Error accessing webcam: ", err);
+});
+
+// Sleep helper function
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Capture single photo
+function capturePhoto() {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/png');
+}
+
+// Countdown function
+async function showCountdown() {
+    countdownEl.style.display = 'block';
+    for (let i = 3; i > 0; i--) {
+        countdownEl.textContent = i;
+        await sleep(1000);
+    }
+    countdownEl.style.display = 'none';
+}
+
+// Countdown + Capture 3 photos
+startButton.addEventListener('click', async () => {
+    capturedPhotos = [];
+
+    for (let i = 0; i < 3; i++) {
+        await showCountdown();
+        capturedPhotos.push(capturePhoto());
+        await sleep(500); // Short delay between shots
+    }
+
+    // After capturing, ask email
+    const email = prompt("Enter your email to receive your photo strip (optional):");
+
+    // Send to server
+    fetch('/capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            photos: capturedPhotos,
+            email: email
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Photo strip created and sent!');
+        } else {
+            alert('Error: ' + (data.error || 'Unknown'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+});
+</script>
+
+</body>
+</html>
