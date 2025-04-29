@@ -88,9 +88,63 @@
       display: none;
       z-index: 10;
     }
+    
+@keyframes fall {
+  to { transform: translateY(100vh) rotate(360deg); }
+}
+  </style>
+  <style>
+    /* Mirror ball animation */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .mirror-ball {
+      position: fixed;
+      width: 80px;
+      height: 80px;
+      background: radial-gradient(circle at 30% 30%, 
+        #fff 0%, 
+        #ccc 10%, 
+        #888 30%, 
+        transparent 70%);
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(255,255,255,0.8);
+      opacity: 0.7;
+      z-index: -1;
+      animation: spin 8s linear infinite;
+    }
   </style>
 </head>
+<!-- Mirror balls -->
+<div class="mirror-ball" style="top:10%; left:5%;"></div>
+<div class="mirror-ball" style="bottom:15%; right:8%; animation-delay:-4s;"></div>
+<script>
+  // Floating stickers
+  const stickers = ['🎞️', '📸', '✨', '🎉'];
+  function createSticker() {
+    const sticker = document.createElement('div');
+    sticker.textContent = stickers[Math.floor(Math.random()*stickers.length)];
+    sticker.style.position = 'fixed';
+    sticker.style.fontSize = `${Math.random()*30 + 20}px`;
+    sticker.style.opacity = '0.7';
+    sticker.style.animation = `float ${Math.random()*10 + 5}s linear infinite`;
+    sticker.style.left = `${Math.random()*100}%`;
+    sticker.style.top = `${Math.random()*100}%`;
+    document.body.appendChild(sticker);
+  }
+  
+  // Create 5 random stickers
+  for(let i=0; i<5; i++) createSticker();
+</script>
 
+<style>
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-50px) rotate(10deg); }
+  }
+</style>
 <body>
 
   <h1>Vintage Party Photobooth 📸</h1>
