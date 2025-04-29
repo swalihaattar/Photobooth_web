@@ -43,18 +43,34 @@
 
 
     #start {
-      margin-top: 15px;
-      padding: 12px 25px;
-      font-size: 1.2em;
-      background-color: #bfa88e;
-      border: none;
-      border-radius: 8px;
-      color: #8B4513; /* Vintage brown text color */
-      cursor: pointer;
-      box-shadow: 2px 2px 6px rgba(0,0,0,0.5);
-      transition: background-color 0.3s ease;
-    }
+    margin-top: 15px;
+    padding: 12px 25px;
+    font-size: 1.2em;
+    background-color: #bfa88e;
+    border: none;
+    border-radius: 8px;
+    color: #8B4513;
+    cursor: pointer;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+    transition: background-color 0.3s ease;
+}
 
+#filterToggle {
+    margin-top: 15px;
+    padding: 12px 25px;
+    font-size: 1.2em;
+    background-color: #bfa88e;
+    border: none;
+    border-radius: 8px;
+    color: #8B4513;
+    cursor: pointer;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+    transition: background-color 0.3s ease;
+}
+
+#start:hover, #filterToggle:hover {
+    background-color: #a07c61;
+}
 
     #start:hover {
       background-color: #a07c61;
@@ -84,8 +100,8 @@
     <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
     <br>
     <button id="start">Start Capture 🎥</button>  
-  </div>
-
+    <button id="filterToggle">Enable Vintage Filter ☑️</button>  <!-- Add this line -->
+ </div>
   <div id="countdown"></div> <!-- Countdown div -->
 
   <script>
@@ -136,6 +152,11 @@
     }
     
     // Countdown + Capture 3 photos
+    document.getElementById('filterToggle').addEventListener('click', function() {
+    this.textContent = this.textContent.includes('Disable') 
+        ? 'Enable Vintage Filter ☑️' 
+        : 'Disable Vintage Filter ❎';
+    });
     
     startButton.addEventListener('click', async () => {
         capturedPhotos = [];
@@ -149,7 +170,25 @@
     // Capture 3 photos
     for (let i = 0; i < 3; i++) {
         await showCountdown();
-        capturedPhotos.push(capturePhoto());
+       // Temporary canvas for filter application
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = video.videoWidth;
+      tempCanvas.height = video.videoHeight;
+      const ctx = tempCanvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+// Apply filter ONLY if button says "Disable"
+if (document.getElementById('filterToggle').textContent.includes('Disable')) {
+    const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        data[i] = data[i + 1] = data[i + 2] = avg; // B&W effect
+    }
+    ctx.putImageData(imageData, 0, 0);
+}
+
+capturedPhotos.push(tempCanvas.toDataURL('image/png'));
         await sleep(500); // Short delay between shots
     }
 
@@ -206,9 +245,10 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                photos: capturedPhotos,
-                email: email,
-                custom_text: custom_text || 'Vintage Memories' // Fallback to default
+            photos: capturedPhotos,
+            email: email,
+            custom_text: custom_text || 'Vintage Memories',
+            apply_filter: document.getElementById('filterToggle').textContent.includes('Disable')
             })
         })
         .then(response => response.json())

@@ -47,7 +47,8 @@ def capture():
     data = request.json
     photos = data.get('photos')
     email = data.get('email')
-    custom_text = data.get('custom_text', 'Vintage Memories')  # Default if not provided
+    custom_text = data.get('custom_text', 'Vintage Memories')
+    apply_filter = data.get('apply_filter', False)  # Default to False to match client-side
 
     if not photos:
         return jsonify({'error': 'No photos provided'}), 400
@@ -57,13 +58,11 @@ def capture():
         try:
             img_bytes = base64.b64decode(img_data.split(',')[1])
             img = Image.open(BytesIO(img_bytes)).convert('RGB')
-            img = enhance_image(img)
+            if apply_filter:  # Only apply filter if requested
+                img = enhance_image(img)
             images.append(img)
         except Exception as e:
             return jsonify({'error': f"Failed to decode image: {str(e)}"}), 400
-
-    if len(images) != 3:
-        return jsonify({'error': 'Exactly 3 photos are required.'}), 400
 
     # Create photo strip
     strip = Image.new('RGB', (320, 3 * 410), (243, 229, 171))
