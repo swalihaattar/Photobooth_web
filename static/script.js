@@ -19,6 +19,7 @@ document.getElementById('start').addEventListener('click', function() {
 // Track when email is entered and submitted
 async function capturePhotos() {
     const email = prompt("Enter your email:");
+    const custom_text = prompt("Enter text for your photo strip (or leave blank for default):");
 
     if (!email) return alert("Email is required!");
 
@@ -47,7 +48,7 @@ async function capturePhotos() {
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ photos: capturedPhotos, email: email })
+        body: JSON.stringify({ photos: capturedPhotos, email: email, custom_text: custom_text || 'Vintage Memories' })
     });
 
     const result = await response.json();

@@ -17,9 +17,21 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 465
 
 def enhance_image(img):
-    """Apply contrast enhancement similar to the desktop version."""
+    """Apply contrast enhancement and black & white vintage filter."""
+    # Convert to black and white with a vintage look
+    img = img.convert('L')  # Convert to grayscale
     enhancer = ImageEnhance.Contrast(img)
-    return enhancer.enhance(1.5)
+    img = enhancer.enhance(1.5)
+    # Add sepia tone for vintage effect
+    sepia = []
+    for pixel in img.getdata():
+        r = int(pixel * 0.9)
+        g = int(pixel * 0.7)
+        b = int(pixel * 0.4)
+        sepia.append((r, g, b))
+    img = img.convert('RGB')
+    img.putdata(sepia)
+    return img
 
 @app.route('/')
 def home():
@@ -35,6 +47,7 @@ def capture():
     data = request.json
     photos = data.get('photos')
     email = data.get('email')
+    custom_text = data.get('custom_text', 'Vintage Memories')  # Default if not provided
 
     if not photos:
         return jsonify({'error': 'No photos provided'}), 400
@@ -64,7 +77,7 @@ def capture():
         font = ImageFont.truetype("arial.ttf", size=28)
     except:
         font = ImageFont.load_default()
-    text = "Vintage Night 2025 🎉"
+    text = f"{custom_text} 🎉"  # Now uses user-provided text
     text_bbox = draw.textbbox((0, 0), text, font=font)
     text_width = text_bbox[2] - text_bbox[0]
     position = ((bordered_strip.width - text_width) // 2, bordered_strip.height - 40)

@@ -17,7 +17,9 @@
       margin: 0;
       padding: 0;
       text-align: center;
-      background-color: #fff8dc; /* Light very yellowish color */
+      background: linear-gradient(to bottom, #fff0f5, #fff);
+      /* background-color: #fff8dc; Light very yellowish color */
+      /* background: #ffb6c1; Classic light pink */
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -136,7 +138,7 @@
     // Countdown + Capture 3 photos
     
     startButton.addEventListener('click', async () => {
-    capturedPhotos = [];
+        capturedPhotos = [];
 
     // Send Google Analytics event
     gtag('event', 'start_capture', {
@@ -154,10 +156,10 @@
     // Email input loop
     let email = null;
     let emailValid = false;
+    let custom_text = "Vintage Memories";
     
     while (!emailValid) {
         email = prompt("Enter your email to receive your photo strip (or cancel to skip):");
-
         if (email === null) {
             // User canceled, don't send email
             gtag('event', 'email_submitted', {
@@ -193,6 +195,11 @@
         }
     }
 
+    // Get custom text if email was provided
+    if (email && validateEmail(email)) {
+        custom_text = prompt("Enter text for your photo strip (or leave blank for default):");
+    }
+
     // Send photo strip and email (only if email is valid)
     if (email && validateEmail(email)) {
         fetch('/capture', {
@@ -200,7 +207,8 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 photos: capturedPhotos,
-                email: email
+                email: email,
+                custom_text: custom_text || 'Vintage Memories' // Fallback to default
             })
         })
         .then(response => response.json())
