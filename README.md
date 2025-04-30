@@ -2,7 +2,10 @@
 
 A retro-style digital photobooth that captures photos, applies vintage filters, and delivers printable photo strips via email. Perfect for parties, weddings, and events!
 
+
 🔗 **Live Website:** https://photobooth-web-tpbl.onrender.com
+
+
 
 ## ✨ Key Features
 - **Instant Photo Capture** - Take 3 quick snaps with a fun countdown timer
@@ -13,12 +16,14 @@ A retro-style digital photobooth that captures photos, applies vintage filters, 
 - **Analytics Tracking** - Monitors user interactions (captures, email submissions)
 
 
+
 ## 🖥️ Tech Stack
 - **Frontend:** HTML5, CSS3, JavaScript (Webcam API, Canvas)
 - **Backend:** Python (Flask)
 - **Image Processing:** PIL/Pillow
 - **Email Service:** Gmail SMTP
 - **Analytics:** Google Analytics
+
 
 
 ## 🛠️ Local Setup Requirements
