@@ -12,7 +12,7 @@ A retro-style digital photobooth that captures photos, applies vintage filters, 
 - **Vintage Filters** - Toggle between color and classic B&W/sepia effects
 - **Custom Photo Strips** - Photos arranged in a printable strip format
 - **Personalized Text** - Add your own message to each photo strip
-- **Email Delivery** - Get your photos sent directly to your inbox
+- **Email Delivery** - Get your photos sent directly to your inbox!
 - **Analytics Tracking** - Monitors user interactions (captures, email submissions)
 
 
