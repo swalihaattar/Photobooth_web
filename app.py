@@ -106,11 +106,11 @@ def capture():
     # Create Photo Strip
     # =============================================
     # Create blank canvas (3 photos stacked vertically)
-    strip = Image.new('RGB', (320, 3 * 410), (243, 229, 171))  # Vintage cream color
+    strip = Image.new('RGB', (540, 3 * 410), (243, 229, 171))  # Vintage cream color
     
     # Paste each resized image onto the strip
     for idx, img in enumerate(images):
-        img = img.resize((300, 400))  # Standardize size
+        img = img.resize((520, 400))  # Standardize size
         strip.paste(img, (10, idx * 410 + 5))  # Position with 5px padding
     
     # Add decorative gold border
@@ -119,16 +119,16 @@ def capture():
     # Add custom text to the strip
     draw = ImageDraw.Draw(bordered_strip)
     try:
-        font = ImageFont.truetype("arial.ttf", size=28)  # Try to load Arial
+        font = ImageFont.truetype("DejaVuSans.ttf", size=28)  # Try to load Arial
     except:
         font = ImageFont.load_default()  # Fallback to default font
     
-    text = f"{custom_text} 🎉"  # Add celebration emoji
+    text = f"{custom_text}<3"  # Add celebration emoji
     text_bbox = draw.textbbox((0, 0), text, font=font)
     text_width = text_bbox[2] - text_bbox[0]  # Calculate text width
     
     # Center text at bottom of strip
-    position = ((bordered_strip.width - text_width) // 2, bordered_strip.height - 40)
+    position = ((bordered_strip.width - text_width) // 2, bordered_strip.height - 60)
     draw.text(position, text, (255, 215, 0), font=font)  # Gold text color
 
     # Save strip to memory buffer
