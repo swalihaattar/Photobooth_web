@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Basic HTML Metadata -->
+  <meta charset="UTF-8">
+  <title>Vintage Photobooth</title>
+  
+  <!-- Google Analytics Tracking -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GC658FXX9P"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-GC658FXX9P');  // Initialize Google Analytics
+  </script> 
+
+  <!-- Main CSS Styling -->
+  <style>
+    /* Base page styling with vintage gradient background */
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      background: linear-gradient(to bottom, #fff8dc, #a0522d); /* light yellow to sienna brown */
+      font-family: 'Georgia', serif;
+      color: #3e2723; /* dark brown for text */
+    }
+
+    /* Vintage-style heading */
+    h1 {
+      margin-top: 30px;
+      font-size: 3em;
+      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+      color: #8B4513; /* Vintage brown */
+    }
+
+    /* Webcam and canvas styling */
+    #video, #canvas {
+      margin-top: 20px;
+      border: 5px solid #8B4513; /* Vintage brown border */
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5); /* Depth effect */
+    }
+
+    /* Button styling (Start and Filter Toggle) */
+    #start, #filterToggle {
+      margin-top: 15px;
+      padding: 12px 25px;
+      font-size: 1.2em;
+      background-color: #bfa88e; /* Vintage button color */
+      border: none;
+      border-radius: 8px;
+      color: #8B4513;
+      cursor: pointer;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+      transition: background-color 0.3s ease;
+    }
+
+    /* Hover effect for buttons */
+    #start:hover, #filterToggle:hover {
+      background-color: #a07c61; /* Darker shade on hover */
+    }
+
+    /* Countdown animation styling */
+    #countdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 100px;
+      color: white;
+      text-shadow: 2px 2px 10px black;
+      display: none; /* Hidden by default */
+      z-index: 10;
+    }
+    
+    /* Animation for falling elements (unused in current implementation) */
+    @keyframes fall {
+      to { transform: translateY(100vh) rotate(360deg); }
+    }
+  </style>
+
+  <!-- Mirror Ball Animation CSS -->
+  <style>
+    /* Rotating mirror ball effect */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Mirror ball visual styling */
+    .mirror-ball {
+      position: fixed;
+      width: 80px;
+      height: 80px;
+      background: radial-gradient(circle at 30% 30%, 
+        #fff 0%, 
+        #ccc 10%, 
+        #888 30%, 
+        transparent 70%);
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(255,255,255,0.8);
+      opacity: 0.7;
+      z-index: -1; /* Behind other elements */
+      animation: spin 8s linear infinite; /* Continuous rotation */
+    }
+  </style>
+</head>
+
+<!-- Mirror Ball Decorations -->
+<div class="mirror-ball" style="top:10%; left:5%;"></div>
+<div class="mirror-ball" style="bottom:15%; right:8%; animation-delay:-4s;"></div>
+
+<!-- Floating Sticker Animation Script -->
+<script>
+  // Array of emoji stickers to create
+  const stickers = ['🎞️', '📸', '✨', '🎉'];
+  
+  // Function to create a single floating sticker
+  function createSticker() {
+    const sticker = document.createElement('div');
+    sticker.textContent = stickers[Math.floor(Math.random()*stickers.length)];
+    sticker.style.position = 'fixed';
+    sticker.style.fontSize = `${Math.random()*30 + 20}px`; /* Random size */
+    sticker.style.opacity = '0.7';
+    sticker.style.animation = `float ${Math.random()*10 + 5}s linear infinite`;
+    sticker.style.left = `${Math.random()*100}%`; /* Random horizontal position */
+    sticker.style.top = `${Math.random()*100}%`; /* Random vertical position */
+    document.body.appendChild(sticker);
+  }
+  
+  // Create 5 random stickers on page load
+  for(let i=0; i<5; i++) createSticker();
+</script>
+
+<!-- Floating Animation Keyframes -->
+<style>
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-50px) rotate(10deg); } /* Up-and-down motion */
+  }
+</style>
+
+<body>
+  <!-- Main Page Heading -->
+  <h1>Vintage Party Photobooth 📸</h1>
+
+  <!-- Webcam Interface -->
+  <div>
+    <!-- Live Webcam Feed -->
+    <video id="video" width="640" height="480" autoplay></video>
+    <!-- Hidden Canvas for Image Processing -->
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+    <br>
+    <!-- Action Buttons -->
+    <button id="start">Start Capture 🎥</button>  
+    <button id="filterToggle">Enable Vintage Filter ☑️</button>
+  </div>
+  
+  <!-- Countdown Display (initially hidden) -->
+  <div id="countdown"></div>
+
+  <!-- Main Application Script -->
+  <script>
+    // DOM Element References
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const startButton = document.getElementById('start');
+    const countdownEl = document.getElementById('countdown'); 
+    let context = canvas.getContext('2d');
+    
+    // Array to store captured photos
+    let capturedPhotos = [];
+    
+    // Initialize Webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream; // Display webcam feed
+    })
+    .catch(err => {
+        console.error("Error accessing webcam: ", err);
+    });
+    
+    // Helper function for delays
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    // Captures single frame from video
+    function capturePhoto() {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/png'); // Return as data URL
+    }
+    
+    // Displays 3-2-1 countdown before capture
+    async function showCountdown() {
+        countdownEl.style.display = 'block';
+        for (let i = 3; i > 0; i--) {
+            countdownEl.textContent = i;
+            await sleep(1000); // 1 second per count
+        }
+        countdownEl.textContent = "Click!"; // Final cue
+        await sleep(500);
+        countdownEl.style.display = 'none';
+    }
+    
+    // Basic email validation
+    function validateEmail(email) {
+        if (!email) return false;
+        const re = /\S+@\S+\.\S+/;
+        return re.test(email);
+    }
+    
+    // Filter Toggle Button Logic
+    document.getElementById('filterToggle').addEventListener('click', function() {
+        // Toggle button text between enable/disable states
+        this.textContent = this.textContent.includes('Disable') 
+            ? 'Enable Vintage Filter ☑️' 
+            : 'Disable Vintage Filter ❎';
+    });
+    
+    // Main Capture Sequence
+    startButton.addEventListener('click', async () => {
+        capturedPhotos = []; // Reset photo array
+
+        // Google Analytics event
+        gtag('event', 'start_capture', {
+            'event_category': 'Photobooth',
+            'event_label': 'User started capture'
+        });
+
+        // Capture 3 photos with countdown
+        for (let i = 0; i < 3; i++) {
+            await showCountdown();
+            
+            // Create temporary canvas for processing
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth;
+            tempCanvas.height = video.videoHeight;
+            const ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+            // Apply B&W filter if enabled
+            if (document.getElementById('filterToggle').textContent.includes('Disable')) {
+                const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const data = imageData.data;
+                // Convert to grayscale
+                for (let i = 0; i < data.length; i += 4) {
+                    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    data[i] = data[i + 1] = data[i + 2] = avg; // B&W effect
+                }
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            // Save to photos array
+            capturedPhotos.push(tempCanvas.toDataURL('image/png'));
+            await sleep(500); // Brief pause between captures
+        }
+
+        // Email Collection Flow
+        let email = null;
+        let emailValid = false;
+        let custom_text = "Vintage Memories";
+        
+        // Validate email through prompts
+        while (!emailValid) {
+            email = prompt("Enter your email to receive your photo strip (or cancel to skip):");
+            
+            if (email === null) {
+                // User canceled
+                gtag('event', 'email_submitted', {
+                    'event_category': 'Photobooth',
+                    'event_label': 'No email entered',
+                    'email_valid': 'none'
+                });
+                emailValid = true;
+            } else if (email === "") {
+                // Empty input
+                gtag('event', 'email_submitted', {
+                    'event_category': 'Photobooth',
+                    'event_label': 'Blank email entered',
+                    'email_valid': 'none'
+                });
+                alert("Please enter a valid email address.");
+            } else if (!validateEmail(email)) {
+                // Invalid format
+                gtag('event', 'email_submitted', {
+                    'event_category': 'Photobooth',
+                    'event_label': 'Invalid email entered',
+                    'email_valid': 'invalid'
+                });
+                alert("Invalid email. Please enter a valid email.");
+            } else {
+                // Valid email
+                gtag('event', 'email_submitted', {
+                    'event_category': 'Photobooth',
+                    'event_label': 'Email entered',
+                    'email_valid': 'valid'
+                });
+                emailValid = true;
+            }
+        }
+
+        // Get custom text if email provided
+        if (email && validateEmail(email)) {
+            custom_text = prompt("Enter text for your photo strip (or leave blank for default):");
+        }
+
+        // Send data to server if email is valid
+        if (email && validateEmail(email)) {
+            fetch('/capture', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    photos: capturedPhotos,
+                    email: email,
+                    custom_text: custom_text || 'Vintage Memories',
+                    apply_filter: document.getElementById('filterToggle').textContent.includes('Disable')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Photo strip created and sent!');
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    });
+  </script>
+</body>
+</html>
